@@ -1,0 +1,37 @@
+name: Make Build Action
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  # Triggers the workflow on push or pull request events
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: make
+      run: make
+    # Cleans workspace
+    - name: Cleanup Gradle Cache
+      run: make clean
+# TODO: uncomment section below after implemention
+#     - name: make mapreduce
+#       run: make mapreduce
+#     # Cleans workspace
+#     - name: Cleanup Gradle Cache
+#       run: make clean
+#     - name: make t1 (Normal Case)
+#       run: make t1
+#     - uses: actions/upload-artifact@v2
+#       with:
+#         name: output
+#         path: output
+#     # Cleans workspace
+#     - name: Cleanup Gradle Cache
+#       run: make clean
