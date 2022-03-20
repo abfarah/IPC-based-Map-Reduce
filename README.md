@@ -1,4 +1,4 @@
-# Project 1: Basic Map Reduce
+# Project 2: IPC-based-Map-Reduce
 
 - test machine: csel-kh1250-26
 - Date: 03/20/2022
