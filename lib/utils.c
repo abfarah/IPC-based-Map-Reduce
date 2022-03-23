@@ -42,30 +42,93 @@ int getNextWord(int fd, char* buffer){
 
 void sendChunkData(char *inputFile, int nMappers) {
 
- 
-  //TODO open the message queue
+  // Declaring Variables
+  int mid, fd;
+  int mapperID = 0;
+  key_t key = 100;
+  struct msgBuffer msg;
+  char chunkBuffer[MSGSIZE];
+  char wordBuffer[MSGSIZE];
 
+  // Opening the Message Queue
+  mid = msgget(key, 0666 | IPC_CREAT);
+
+  // exit if mssget fails
+  if(mid == -1) {
+    printf("ERROR: Unable to open message queue\n");
+		exit(0);
+	}
   
-  //TODO Construct chunks of at most 1024 bytes each and send each chunk to a mapper in a round
-  // robin fashion. We provide getNextWord(). It reads one word at a time. If a chunk 
-  // is less than 1024 bytes, concatennate the word to the chunk buffer.
-  
-  /* 
-    Example pf handling the split word case:
-    while(getNextWord(fd, buffer)!=0){
+  // Open input file to parse
+  fd = open(inputFile, O_RDONLY);
+
+  // exit if unable to open input file
+	if (fd < 0){
+		printf("ERROR: Cannot open the file %s\n", inputFile);
+		exit(0);
+	}
+
+  // Send data to all mappers using the msg queue
+  while(getNextWord(fd, wordBuffer)!=0){
     if(strlen(chunkBuffer) + strlen(wordBuffer) > 1024){
-        //send the chunk to mapper i
+        //sending the chunk to mapperID
+        msg.msgType = mapperID +1;
+        mapperID = (mapperID+1)%nMappers;
+        strcpy(msg.msgText,chunkBuffer);
+        strcpy(chunkBuffer,wordBuffer);
+        // Sending msg to queue with error handeling
+        if((msgsnd(mid, (void *) &msg, sizeof(msg.msgText), 0)) == -1){
+          printf("ERROR: Unable to send msg chunk to mapper id: %i \n", mapperID);
+          exit(0);
+        }
+        // Reset our buffers for next mapper
+        memset(msg.msgText, '\0', MSGSIZE);
+        memset(wordBuffer, '\0', MSGSIZE);
+        memset(chunkBuffer, '\0', MSGSIZE);
+        
     }else{
         //concatennate the word to the chunk buffer
+        strcat(chunkBuffer,wordBuffer);
+        // Reset our word buffer
+        memset(wordBuffer, '\0', MSGSIZE);
     }
-  
+  }
 
-  */
+  // Sending remaining words in wordBuffer to msg queue if end of file reached
+  msg.msgType = mapperID +1;
+  strcat(chunkBuffer,wordBuffer);
+  strcpy(msg.msgText,chunkBuffer);
+  // Sending msg to queue with error handeling
+  if((msgsnd(mid, (void *) &msg, sizeof(msg.msgText), 0)) == -1){
+    printf("ERROR: Unable to send msg chunk to mapper id: %i \n", mapperID);
+    exit(0);
+  }
 
-  //TODO inputFile read complete, send END message to mappers
+  // Close file
+  close(fd);
 
+  // Sending END message to mappers
+  memset(msg.msgText, '\0', MSGSIZE);
+  for(int i = 1; i <= nMappers; i++){
+    msg.msgType = i;
+    sprintf(msg.msgText, "");
+    if((msgsnd(mid, (void *) &msg, sizeof(msg.msgText), 0)) == -1){
+      printf("ERROR: Unable to send END msg to mapper id: %i \n", i);
+      exit(0);
+    }
+  }
 
-  //TODO wait to receive ACK from all mappers for END notification
+  // Waiting to recieve ACK from all mappers for END notification
+  for(int i = 1; i<= nMappers; i++){
+    if ((msgrcv (mid, (void *)&msg, sizeof (msg), i, 0)) == -1) {
+      printf("ERROR: Unable to recieve ACK from mapper id: %i \n", i);
+      exit(0);
+    }
+  }
+
+  // Closing Message Queue
+  close(mid);
+  // msgctl(mid, IPC_RMID, 0);
 
 }
 
