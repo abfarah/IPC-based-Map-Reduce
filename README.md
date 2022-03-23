@@ -6,6 +6,7 @@
 - X500: farah126, mckel042
 
 ## Project Purpose
+The purpose of this project is to find the number of occurrences a given word may have within a text document. This action can take a while, but this project uses mapping/reducing methods that splits this task into multiple processes to run. This method increases speed at the cost of memory usage.
 
 ## How to Compile
 The current structure of the Template folder should be maintained. If you want to add extra source(.c)
@@ -45,6 +46,13 @@ in input File is the middle of a word.
 
 ## Contributions
 ### Abdul
+- Implement the `sendChunkData()` function
+- Added github actions to autobuild project
+- Update Readme
+   - How to compile the program
+   - Any assumptions outside this document
+   - Team member names and x500
+   - Contribution by each member of the team
 
 ### Nathaniel
    
