@@ -143,7 +143,8 @@ int curMapper = 1;
         
     }else{
         //concatennate the word to the chunk buffer
-        strcat(chunkBuffer,wordBuffer);
+        //strcat(chunkBuffer,wordBuffer);
+        snprintf(chunkBuffer, 1025, "%s", wordBuffer);
         // Reset our word buffer
         memset(wordBuffer, '\0', MSGSIZE);
         count += strlen(chunkBuffer);
