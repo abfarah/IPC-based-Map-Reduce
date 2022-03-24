@@ -55,4 +55,6 @@ in input File is the middle of a word.
    - Contribution by each member of the team
 
 ### Nathaniel
-   
+- Implemented `getchunkdata()` function
+- Edited `sendchunkdata()` to work with `getchunkdata()`
+- Update Nathaniel README contributions
