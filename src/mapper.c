@@ -226,7 +226,7 @@ int main(int argc, char *argv[]) {
     FILE *fd = fopen("test.txt", "a+");
     if(fd==NULL)
        printf("ERROR: Cannot open the file");
-    int ret = fwrite(chunkData, sizeof(char), chunkSize, fd);
+    int ret = fwrite(chunkData, sizeof(char), strlen(chunkData), fd);
     if(ret < 0){
        printf("ERROR: Cannot write to file \n");
        exit(0);

@@ -46,8 +46,9 @@ char *getChunkData(int mapperID) {
     return NULL;
   }
   else{
-    char *text = (char *) malloc(MSGSIZE * sizeof(char));
-    strcat(text, message.msgText);
+    char *text = (char *) malloc((chunkSize+1) * sizeof(char));
+    memset(text, '\0', chunkSize +1);
+    strcpy(text, message.msgText);
     return text;
   }
   //
@@ -86,6 +87,8 @@ void sendChunkData(char *inputFile, int nMappers) {
   struct msgBuffer msg;
   char chunkBuffer[chunkSize];
   char wordBuffer[chunkSize];
+  memset(chunkBuffer, '\0', chunkSize);
+  memset(wordBuffer, '\0', chunkSize);
 
   // Opening the Message Queue and exit if mssget fails
   if( (mid = msgget(keyID, PERMS | IPC_CREAT)) == -1){
@@ -120,7 +123,7 @@ int curMapper = 1;
     if((count + strlen(wordBuffer))  >= 1023){  //strlen(chunkBuffer) + strlen(wordBuffer) > 1024
         //sending the chunk to mapperID
         memset(msg.msgText, '\0', MSGSIZE);
-        snprintf(msg.msgText, 1025, "%s", chunkBuffer);
+        snprintf(msg.msgText, chunkSize, "%s", chunkBuffer);
         msg.msgType = curMapper;
         // strcpy(msg.msgText,chunkBuffer);
         
@@ -143,10 +146,10 @@ int curMapper = 1;
         
     }else{
         //concatennate the word to the chunk buffer
-        //strcat(chunkBuffer,wordBuffer);
-        snprintf(chunkBuffer, 1025, "%s", wordBuffer);
+        strcat(chunkBuffer,wordBuffer);
+        // snprintf(chunkBuffer, chunkSize, "%s", wordBuffer);
         // Reset our word buffer
-        memset(wordBuffer, '\0', MSGSIZE);
+        memset(wordBuffer, '\0', chunkSize);
         count += strlen(chunkBuffer);
     }
   }
