@@ -47,6 +47,7 @@ in input File is the middle of a word.
 ## Contributions
 ### Abdul
 - Implement the `sendChunkData()` function
+- Implement the `getInterData()` function
 - Added github actions to autobuild project
 - Update Readme
    - How to compile the program

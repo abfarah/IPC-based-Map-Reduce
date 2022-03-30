@@ -207,20 +207,45 @@ int hashFunction(char* key, int reducers){
 }
 
 int getInterData(char *key, int reducerID) {
-    //TODO open message queue
-      
+  // Declaring Variables
+  int mid, mid2, fd;
+  int mapperID = 0;
 
+  struct msgBuffer msg;
 
+  // Opening the Message Queue and exit if mssget fails
+  if( (mid = msgget(keyID, PERMS | IPC_CREAT)) == -1){
+    fprintf(stderr, "Problem with reducers %d: %s", reducerID, strerror(errno));
+    exit(-1);
+  }
 
-    //TODO receive data from the master
-     
+  if( (mid2 = msgget(keyID2, PERMS | IPC_CREAT)) == -1){
+    fprintf(stderr, "Problem with reducers %d: %s", reducerID, strerror(errno));
+    exit(-1);
+  }
 
+  //TODO receive data from the master
+  if( (msgrcv(mid, (void *) &msg, sizeof(msg.msgText), mapperID, 0)) == -1){
+    fprintf(stderr, "Problem receiving the data for reducers %d: %s", reducerID, strerror(errno));
+    exit(-1);
+  }
 
+  //TODO check for END message and send ACK to master and then return 0
+  //Otherwise return 1
+  if(msg.msgText[0] == 4){
+        memset(msg.msgText, '\0', MSGSIZE);
+        msg.msgType = reducerID;
 
-    //TODO check for END message and send ACK to master and then return 0
-    //Otherwise return 1
-
-
+        if(msgsnd(mid2, &msg, MSGSIZE, 0) == -1){
+          fprintf(stderr, "Problem with reducers %d: %s", reducerID, strerror(errno));
+          exit(-1);
+        }
+        return 0;
+    }else{
+        strcpy(key, msg.msgText);
+        return 1;
+    }
+  return 0;
 }
 
 void shuffle(int nMappers, int nReducers) {
