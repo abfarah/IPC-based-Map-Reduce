@@ -109,7 +109,7 @@ void sendChunkData(char *inputFile, int nMappers) {
   // exit if unable to open input file
 	if (fd < 0){
 		printf("ERROR: Cannot open the file %s\n", inputFile);
-		exit(0);
+		exit(-1);
 	}
 
 int count = 0;
@@ -119,8 +119,8 @@ int curMapper = 1;
     if(curMapper > nMappers){
       curMapper = 1;
     }
-    printf("count: %d\n", count);
-    if((count + strlen(wordBuffer))  >= 1023){  //strlen(chunkBuffer) + strlen(wordBuffer) > 1024
+    // printf("count: %d\n", count);
+    if((strlen(chunkBuffer) + strlen(wordBuffer))  >= 1023){  //strlen(chunkBuffer) + strlen(wordBuffer) > 1024
         //sending the chunk to mapperID
         memset(msg.msgText, '\0', MSGSIZE);
         snprintf(msg.msgText, chunkSize, "%s", chunkBuffer);
@@ -191,6 +191,7 @@ int curMapper = 1;
   // Closing Message Queue
   // close(mid);
   msgctl(mid, IPC_RMID, NULL);
+  msgctl(mid2, IPC_RMID, NULL);
 
 }
 
@@ -229,7 +230,7 @@ int getInterData(char *key, int reducerID) {
     fprintf(stderr, "Problem receiving the data for reducers %d: %s", reducerID, strerror(errno));
     exit(-1);
   }
-
+  strcpy(key, msg.msgText);
   //TODO check for END message and send ACK to master and then return 0
   //Otherwise return 1
   if(msg.msgText[0] == 4){
@@ -242,16 +243,32 @@ int getInterData(char *key, int reducerID) {
         }
         return 0;
     }else{
-        strcpy(key, msg.msgText);
+        // strcpy(key, msg.msgText);
         return 1;
     }
-  return 0;
+
+  // msgctl(mid, IPC_RMID, NULL);
+  // msgctl(mid2, IPC_RMID, NULL);
+  // return 0;
 }
 
 void shuffle(int nMappers, int nReducers) {
 
     //TODO open message queue
+    int mid, mid2, rid, fd;
+    struct msgBuffer msg;
+    char dirPath[100];
      
+    // Opening the Message Queue and exit if mssget fails
+    if( (mid = msgget(keyID, PERMS | IPC_CREAT)) == -1){
+      printf("ERROR: Unable to open message queue\n");
+      exit(0);
+    }
+     
+    if( (mid2 = msgget(keyID2, PERMS | IPC_CREAT)) == -1){
+      printf("ERROR: Unable to open message queue\n");
+      exit(0);
+    }
 
 
     //TODO traverse the directory of each Mapper and send the word filepath to the reducer
@@ -259,16 +276,78 @@ void shuffle(int nMappers, int nReducers) {
     //file, select the reducer using a hash function and send word filepath to
     //reducer 
 
+    // traverse the directory of each Mapper
+    int mapper = 1;
+    DIR *drctry;
+    for(; mapper <= nMappers; mapper++){
+      
+      // Create Filepath for MapOut
+	    memset(dirPath, '\0', 100);
+	    sprintf(dirPath, "./output/MapOut/Map_%d/", mapper);
 
+      if( (drctry = opendir(dirPath)) == NULL){
+        fprintf(stderr, "Error Opening %s \n%s", dirPath, strerror(errno));
+        exit(-1);
+      }
 
+      struct dirent * entry;
+
+      while( (entry = readdir(drctry)) != NULL ){
+        // You should check dirent is . or .. or .DS_Store
+        if( !strcmp(entry->d_name, ".") /* <- true for any file that starts with '.', so DS_Store is covered */ 
+        || !strcmp(entry->d_name, "..") ){
+          continue;
+        }
+
+        // If it is a regular
+        //file, select the reducer using a hash function and send word filepath to reducer
+
+        char *filepath = (char *) malloc(sizeof(char) * (100+ strlen(entry->d_name)));
+
+        memset(filepath, '\0', 100);
+        strcat(filepath, dirPath);
+        strcat(filepath, entry->d_name);
+        rid = hashFunction(entry->d_name, nReducers) + 1;
+        memset(msg.msgText, '\0', MSGSIZE);
+        snprintf(msg.msgText, MSGSIZE, "%s", filepath);
+        msg.msgType = rid;
+
+        if( (msgsnd( mid, &msg, MSGSIZE, 0)) < 0){
+          fprintf(stderr, "Error sending message to %d \n%s", rid, strerror(errno));
+          exit(-1);
+        }
+
+      }
+
+      
+    }
+    closedir(drctry);
 
     //TODO inputFile read complete, send END message to reducers
+    for( int reducer = 1; reducer <= nReducers; reducer++){
+      msg.msgType = reducer;
+      memset(msg.msgText, '\0', MSGSIZE);
+      sprintf(msg.msgText, "%c", 4);
 
+      if( (msgsnd( mid, &msg, MSGSIZE, 0)) < 0){
+          fprintf(stderr, "Error sending message for reducer: %d \n%s", rid, strerror(errno));
+          exit(-1);
+        }
+    }
     
 
-
-    
     //TODO  wait for ACK from the reducers for END notification
+    for(int reducer = 1; reducer <= nReducers; reducer++){
+      if( (msgrcv(mid2, &msg, MSGSIZE, 0,0)) == -1){
+        fprintf(stderr, "Error getting ACK for reducer: %d \n%s", rid, strerror(errno));
+        exit(-1);
+      }
+    }
+
+    msgctl(mid, IPC_RMID, NULL);
+    msgctl(mid2, IPC_RMID, NULL);
+    
+    return;
 }
 
 // check if the character is valid for a word

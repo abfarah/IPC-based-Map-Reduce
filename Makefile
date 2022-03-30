@@ -20,11 +20,42 @@ $(LIBDIR)/utils.o: $(LIBDIR)/utils.c
 .PHONY: run clean t1 t2 t3
 
 #500KB
-t1:
+t1f:
+	make
+	./mapreduce 5 2 test/T2/empty
+t1m:
+	make
+	./mapreduce 0 -1 test/T2/empty
+t1mltr:
+	make
+	./mapreduce 1 2 test/T2/empty
+t1r:
+	make
+	./mapreduce 1 0 test/T2/empty
+t2:
 # 	make -i clean
-# 	make
+	make
+	./mapreduce 5 2 test/T2/empty.txt
+t3:
+# 	make -i clean
+	make
+	./mapreduce 1 1 test/T3/F3.txt
+t4:
+# 	make -i clean
+	make
+	./mapreduce 32 32 test/T3/F3.txt
+t5:
+# 	make -i clean
+	make
 	./mapreduce 5 2 test/T1/F1.txt
 
 clean:
-	rm lib/utils.o mapreduce mapper reducer
+	rm mapreduce mapper reducer
 	rm -rf output
+
+valMR:
+	make
+	chmod +x mapreduce
+	chmod +x mapper
+	chmod +x reducer
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --trace-children=yes ./mapreduce 5 2 test/T1/F1.txt
