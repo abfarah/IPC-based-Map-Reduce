@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
 	//interDS = NULL;
 
 	//create folder specifically for this mapper in output/MapOut
-	//mapOutDir = createMapDir(mapperID);
+	mapOutDir = createMapDir(mapperID);
 
 
 	int count = 0;
@@ -222,23 +222,24 @@ int main(int argc, char *argv[]) {
      * finish the intermediate submission, please turn it on.  
      *
      *   
-     */
-    FILE *fd = fopen("test.txt", "a+");
-    if(fd==NULL)
-       printf("ERROR: Cannot open the file");
-    int ret = fwrite(chunkData, sizeof(char), strlen(chunkData), fd);
-    if(ret < 0){
-       printf("ERROR: Cannot write to file \n");
-       exit(0);
-    }
-    fclose(fd);
+    //  */
+    // FILE *fd = fopen("test.txt", "a+");
+    // if(fd==NULL)
+    //    printf("ERROR: Cannot open the file");
+    // int ret = fwrite(chunkData, sizeof(char), strlen(chunkData), fd);
+    // if(ret < 0){
+    //    printf("ERROR: Cannot write to file \n");
+    //    exit(0);
+    // }
+    // fclose(fd);
 
-		//map(chunkData);
+		map(chunkData);
 	}
 
 	//student code
-	//writeIntermediateDS();
-	//freeInterDS(interDS);
+	writeIntermediateDS();
+	freeInterDS(interDS);
+	free(mapOutDir);
 
 	return 0;
 }
