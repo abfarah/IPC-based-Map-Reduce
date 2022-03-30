@@ -1,8 +1,9 @@
 #include "utils.h"
 
 #define PERMS 0666
-key_t keyID = 4061;
-key_t keyID2 = 4062;
+#define FTOK_ID 4061001
+#define FTOK_ID2 4061002
+
 
 char *getChunkData(int mapperID) {
   fflush(stdout);
@@ -10,7 +11,18 @@ char *getChunkData(int mapperID) {
 //TODO open message queue
   struct msgBuffer message;
   int mid, mid2;
- 
+  key_t keyID, keyID2;  
+  
+  if ((keyID = ftok(".", FTOK_ID)) == -1){
+        fprintf(stderr, "Error generating key for mapper %d %s\n", mapperID, strerror(errno));
+        exit(-1);
+  }
+	
+	if ((keyID2 = ftok(".", FTOK_ID2)) == -1){
+        fprintf(stderr, "Error generating key for mapper %d %s\n", mapperID, strerror(errno));
+        exit(-1);
+  }
+
   if( (mid = msgget(keyID, PERMS | IPC_CREAT)) == -1){
     fprintf(stderr, "Problem with Mapper %d: %s", mapperID, strerror(errno));
     exit(-1);
@@ -89,6 +101,18 @@ void sendChunkData(char *inputFile, int nMappers) {
   char wordBuffer[chunkSize];
   memset(chunkBuffer, '\0', chunkSize);
   memset(wordBuffer, '\0', chunkSize);
+
+  key_t keyID, keyID2; 
+
+  if ((keyID = ftok(".", FTOK_ID)) == -1){
+        fprintf(stderr, "Error generating key %s\n",  strerror(errno));
+        exit(-1);
+  }
+  
+  if ((keyID2 = ftok(".", FTOK_ID2)) == -1){
+        fprintf(stderr, "Error generating key %s\n",  strerror(errno));
+        exit(-1);
+  }
 
   // Opening the Message Queue and exit if mssget fails
   if( (mid = msgget(keyID, PERMS | IPC_CREAT)) == -1){
@@ -214,6 +238,18 @@ int getInterData(char *key, int reducerID) {
 
   struct msgBuffer msg;
 
+  key_t keyID, keyID2; 
+
+  if ((keyID = ftok(".", FTOK_ID)) == -1){
+        fprintf(stderr, "Error generating key %s\n",  strerror(errno));
+        exit(-1);
+  }
+  
+  if ((keyID2 = ftok(".", FTOK_ID2)) == -1){
+        fprintf(stderr, "Error generating key %s\n", strerror(errno));
+        exit(-1);
+  }
+
   // Opening the Message Queue and exit if mssget fails
   if( (mid = msgget(keyID, PERMS | IPC_CREAT)) == -1){
     fprintf(stderr, "Problem with reducers %d: %s", reducerID, strerror(errno));
@@ -259,15 +295,27 @@ void shuffle(int nMappers, int nReducers) {
     struct msgBuffer msg;
     char dirPath[100];
      
+    key_t keyID, keyID2; 
+
+    if ((keyID = ftok(".", FTOK_ID)) == -1){
+          fprintf(stderr, "Error generating key %s\n",  strerror(errno));
+          exit(-1);
+    }
+
+    if ((keyID2 = ftok(".", FTOK_ID2)) == -1){
+          fprintf(stderr, "Error generating key for %s\n",  strerror(errno));
+          exit(-1);
+    }
+
     // Opening the Message Queue and exit if mssget fails
     if( (mid = msgget(keyID, PERMS | IPC_CREAT)) == -1){
       printf("ERROR: Unable to open message queue\n");
-      exit(0);
+      exit(-1);
     }
      
     if( (mid2 = msgget(keyID2, PERMS | IPC_CREAT)) == -1){
       printf("ERROR: Unable to open message queue\n");
-      exit(0);
+      exit(-1);
     }
 
 
