@@ -58,4 +58,6 @@ in input File is the middle of a word.
 ### Nathaniel
 - Implemented `getchunkdata()` function
 - Edited `sendchunkdata()` to work with `getchunkdata()`
+- Implement `shuffle()`
+- Add Test cases to the Makefile
 - Update Nathaniel README contributions
